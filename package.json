@@ -1,0 +1,44 @@
+{
+  "name": "melda-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MELDA backend: owns the shared class dataset and proxies the AI calls.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:seed": "tsx src/db/seed.ts",
+    "check:ai": "tsx src/ai/ai.check.ts",
+    "check:claude": "tsx src/ai/claude.check.ts",
+    "check:auth": "tsx src/http/auth.check.ts",
+    "check:dataset": "tsx src/db/loadDataset.check.ts",
+    "check:api": "tsx src/http/api.check.ts",
+    "check": "pnpm check:ai && pnpm check:claude && pnpm check:auth && pnpm check:dataset && pnpm check:api",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.5",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "melda-shared": "file:../melda-shared",
+    "pg": "^8.23.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.2.0",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.10",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}
