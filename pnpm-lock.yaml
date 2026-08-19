@@ -33,8 +33,8 @@ importers:
         specifier: ^9.0.3
         version: 9.0.3
       melda-shared:
-        specifier: file:../melda-shared
-        version: file:../melda-shared
+        specifier: github:David3Emmanuel/melda-shared#v0.1.0
+        version: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/c199d4e74fb012725467c1bdb75ff2f75251b4d2
       pg:
         specifier: ^8.23.0
         version: 8.23.0
@@ -1021,8 +1021,9 @@ packages:
     resolution: {integrity: sha512-yz3xRaG20c6/BOzvYoDaGtPmGscs7YivItZEEqe6GbwNfHuxu9YNmvnEkMzKldAGY4/80pRcQRZSEnhquk9XuQ==}
     engines: {node: '>= 0.8'}
 
-  melda-shared@file:../melda-shared:
-    resolution: {directory: ../melda-shared, type: directory}
+  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/c199d4e74fb012725467c1bdb75ff2f75251b4d2:
+    resolution: {tarball: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/c199d4e74fb012725467c1bdb75ff2f75251b4d2}
+    version: 0.1.0
 
   merge-descriptors@2.0.0:
     resolution: {integrity: sha512-Snk314V5ayFLhp3fkUREub6WtjBfPdCPY1Ln8/8munuLuiYhsABgBVWsozAG+MWMbVEvcdcpbi9R7ww22l9Q3g==}
@@ -1926,7 +1927,7 @@ snapshots:
 
   media-typer@1.1.1: {}
 
-  melda-shared@file:../melda-shared: {}
+  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/c199d4e74fb012725467c1bdb75ff2f75251b4d2: {}
 
   merge-descriptors@2.0.0: {}
 
