@@ -115,3 +115,11 @@ export const adaptSectionSchema = z.object({
   mode: adaptationMode,
   strugglePct: z.number().optional(),
 });
+
+// A student asking about a lesson they're reading. sectionId narrows the framing;
+// the question is length-capped so the proxied prompt can't be used as free tokens.
+export const askSchema = z.object({
+  lessonId: z.string().min(1),
+  sectionId: z.string().optional(),
+  question: z.string().min(1).max(1000),
+});

@@ -228,3 +228,22 @@ export async function recordSignal(
   });
   return id;
 }
+
+// Save a lesson for a student. onConflictDoNothing makes it idempotent against the
+// (student, lesson) primary key, so tapping Save twice never errors or duplicates.
+export async function saveItem(
+  classId: string,
+  studentId: string,
+  lessonId: string,
+): Promise<void> {
+  await db
+    .insert(t.savedItems)
+    .values({ studentId, lessonId, classId, createdAt: now() })
+    .onConflictDoNothing();
+}
+
+export async function unsaveItem(studentId: string, lessonId: string): Promise<void> {
+  await db
+    .delete(t.savedItems)
+    .where(and(eq(t.savedItems.studentId, studentId), eq(t.savedItems.lessonId, lessonId)));
+}

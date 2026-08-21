@@ -22,6 +22,7 @@ export const studentEmail = (studentId: string) => `${studentId}@melda.africa`;
 
 // Delete order: children before the rows they reference.
 async function clearAll() {
+  await db.delete(t.savedItems);
   await db.delete(t.answers);
   await db.delete(t.signals);
   await db.delete(t.submissions);

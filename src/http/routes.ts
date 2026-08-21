@@ -26,6 +26,7 @@ import {
   type ClassCard,
   type Dataset,
   type InsightsResponse,
+  type Lesson,
   type StudentAssignment,
   type Subject,
 } from 'melda-shared';
@@ -39,6 +40,8 @@ import {
   createLesson,
   publishLesson,
   recordSignal,
+  saveItem,
+  unsaveItem,
   writeSubmission,
 } from '../db/mutations';
 import { seed } from '../db/seed';
@@ -54,6 +57,7 @@ import {
 } from './auth';
 import {
   adaptSectionSchema,
+  askSchema,
   createAdaptationSchema,
   createAssignmentSchema,
   createLessonSchema,
@@ -103,6 +107,24 @@ async function lessonClassId(lessonId: string): Promise<string | null> {
     .from(t.lessons)
     .where(eq(t.lessons.id, lessonId));
   return row?.classId ?? null;
+}
+
+/**
+ * Resolve a lesson the caller is allowed to read, or null. Enforces class
+ * membership and hides unpublished lessons from students - the shared guard behind
+ * GET /lessons/:id, POST /ai/ask and POST /lessons/:id/save, so all three answer
+ * an inaccessible lesson identically (404) and can't be used to probe existence.
+ */
+async function accessibleLesson(
+  user: AuthUser,
+  lessonId: string,
+): Promise<{ classId: string; lesson: Lesson } | null> {
+  const classId = await lessonClassId(lessonId);
+  if (!classId || !(await userInClass(user, classId))) return null;
+  const ds = await loadDataset(classId);
+  const lesson = ds.lessons.find((l) => l.id === lessonId);
+  if (!lesson || (user.role === 'student' && lesson.status !== 'published')) return null;
+  return { classId, lesson };
 }
 
 async function assignmentClassId(assignmentId: string): Promise<string | null> {
@@ -262,18 +284,12 @@ router.get('/classes/:id/lessons', requireClassAccess(), async (req: Request, re
 });
 
 router.get('/lessons/:id', async (req: Request, res: Response) => {
-  const classId = await lessonClassId(pathParam(req, 'id'));
-  if (!classId || !(await userInClass(req.user!, classId))) {
+  const found = await accessibleLesson(req.user!, pathParam(req, 'id'));
+  if (!found) {
     res.status(404).json({ error: 'lesson not found' });
     return;
   }
-  const ds = await loadDataset(classId);
-  const lesson = ds.lessons.find((l) => l.id === pathParam(req, 'id'));
-  if (!lesson || (req.user!.role === 'student' && lesson.status !== 'published')) {
-    res.status(404).json({ error: 'lesson not found' });
-    return;
-  }
-  res.json(lesson);
+  res.json(found.lesson);
 });
 
 // --- assignments (teacher: live progress; student: own paper + status) -------
@@ -396,6 +412,52 @@ router.post('/signals', requireRole('student'), async (req: Request, res: Respon
   res.status(201).json({ id });
 });
 
+// --- student SAVED lessons ---------------------------------------------------
+
+router.post('/lessons/:id/save', requireRole('student'), async (req: Request, res: Response) => {
+  const lessonId = pathParam(req, 'id');
+  const found = await accessibleLesson(req.user!, lessonId);
+  if (!found) {
+    res.status(404).json({ error: 'lesson not found' });
+    return;
+  }
+  await saveItem(found.classId, req.user!.id, lessonId);
+  res.status(201).json({ ok: true });
+});
+
+router.delete('/lessons/:id/save', requireRole('student'), async (req: Request, res: Response) => {
+  // Unsaving only removes the student's own row, so a lighter guard than save:
+  // membership in the owning class, no published check - a student can always
+  // clear a save even if the lesson was later unpublished.
+  const lessonId = pathParam(req, 'id');
+  const classId = await lessonClassId(lessonId);
+  if (!classId || !(await userInClass(req.user!, classId))) {
+    res.status(404).json({ error: 'lesson not found' });
+    return;
+  }
+  await unsaveItem(req.user!.id, lessonId);
+  res.json({ ok: true });
+});
+
+router.get('/me/saved', requireRole('student'), async (req: Request, res: Response) => {
+  const rows = await db.select().from(t.savedItems).where(eq(t.savedItems.studentId, req.user!.id));
+  if (rows.length === 0) {
+    res.json([] satisfies Lesson[]);
+    return;
+  }
+  // Reassemble each owning class once, then keep the saved + still-published
+  // lessons, newest save first. Filtering on published means an unpublished lesson
+  // drops out of Saved without deleting the row.
+  const savedAt = new Map(rows.map((r) => [r.lessonId, r.createdAt]));
+  const classIds = [...new Set(rows.map((r) => r.classId))];
+  const datasets = await Promise.all(classIds.map((c) => loadDataset(c)));
+  const lessons = datasets
+    .flatMap((ds) => ds.lessons)
+    .filter((l) => savedAt.has(l.id) && l.status === 'published')
+    .sort((a, b) => (savedAt.get(b.id)! < savedAt.get(a.id)! ? -1 : 1));
+  res.json(lessons satisfies Lesson[]);
+});
+
 // --- demo reset (dev only) ---------------------------------------------------
 
 router.post(
@@ -412,7 +474,9 @@ router.post(
   },
 );
 
-// --- AI proxy (teacher-only drafting; the key lives here, never in an app) ----
+// --- AI proxy (the key lives here, never in an app) --------------------------
+// Teachers draft; students ask about a lesson they're reading. Every route sits
+// behind the /ai rate limiter (server.ts) so the paid model surface can't be spun.
 
 router.post('/ai/draft-lesson', requireRole('teacher'), async (req: Request, res: Response) => {
   res.json(await ai.draftLesson(draftLessonSchema.parse(req.body)));
@@ -424,4 +488,30 @@ router.post('/ai/draft-quiz', requireRole('teacher'), async (req: Request, res: 
 
 router.post('/ai/adapt-section', requireRole('teacher'), async (req: Request, res: Response) => {
   res.json(await ai.adaptSection(adaptSectionSchema.parse(req.body)));
+});
+
+// The student ask: grounded in the lesson they're reading, stateless server-side
+// (the app keeps its own on-device transcript). Same lesson guard as GET /lessons/:id.
+router.post('/ai/ask', requireRole('student'), async (req: Request, res: Response) => {
+  const body = askSchema.parse(req.body);
+  const found = await accessibleLesson(req.user!, body.lessonId);
+  if (!found) {
+    res.status(404).json({ error: 'lesson not found' });
+    return;
+  }
+  const { lesson } = found;
+  const section = body.sectionId ? lesson.sections.find((s) => s.id === body.sectionId) : undefined;
+  const context = [
+    lesson.summary,
+    ...(section
+      ? [`${section.title}: ${section.body}`]
+      : lesson.sections.map((s) => `${s.title}: ${s.body}`)),
+  ].join('\n\n');
+  const { answer } = await ai.answerQuestion({
+    question: body.question,
+    lessonTitle: lesson.title,
+    sectionTitle: section?.title,
+    context,
+  });
+  res.json({ answer });
 });

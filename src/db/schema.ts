@@ -193,3 +193,23 @@ export const signals = pgTable('signals', {
   value: real('value'),
   note: text('note'),
 });
+
+// A student's saved lessons. Composite PK (student, lesson) makes save idempotent
+// - re-saving the same lesson is a no-op, not a duplicate row. class_id is carried
+// so /me/saved can reload the owning class(es) without re-joining through lessons.
+export const savedItems = pgTable(
+  'saved_items',
+  {
+    studentId: text('student_id')
+      .notNull()
+      .references(() => students.id),
+    lessonId: text('lesson_id')
+      .notNull()
+      .references(() => lessons.id),
+    classId: text('class_id')
+      .notNull()
+      .references(() => classes.id),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.studentId, t.lessonId] })],
+);

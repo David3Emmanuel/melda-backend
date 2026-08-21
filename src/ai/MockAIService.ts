@@ -9,7 +9,6 @@
 import type {
   AdaptationMode,
   AdaptSectionInput,
-  AIService,
   AdaptationDraft,
   DraftLessonInput,
   DraftQuizInput,
@@ -18,6 +17,7 @@ import type {
   QuizDraft,
   QuizDraftQuestion,
 } from 'melda-shared';
+import type { AnswerQuestionInput, StudentAIService } from './student';
 
 const delay = (ms: number): Promise<void> =>
   ms <= 0 ? Promise.resolve() : new Promise((resolve) => setTimeout(resolve, ms));
@@ -50,7 +50,7 @@ export interface MockAIServiceOptions {
   latencyMs?: number;
 }
 
-export class MockAIService implements AIService {
+export class MockAIService implements StudentAIService {
   private readonly latencyMs: number;
 
   constructor(options: MockAIServiceOptions = {}) {
@@ -143,5 +143,21 @@ export class MockAIService implements AIService {
       `The clear pain point is ${topConceptName}, where ${topStrugglePct}% are struggling. ` +
       `Consider re-teaching ${topConceptName} with a simpler framing or a fresh example before moving on.`
     );
+  }
+
+  // A patient, on-topic tutor reply. Deterministic (no model), so it reads as a
+  // real answer keyed to the lesson and question without inventing facts: it
+  // points the student back at the relevant part and models how to check
+  // themselves. The real ClaudeAIService (see ./index.ts) writes a genuine answer.
+  async answerQuestion(input: AnswerQuestionInput): Promise<{ answer: string }> {
+    await delay(this.latencyMs);
+    const q = input.question.trim().replace(/\s+/g, ' ') || 'that';
+    const focus = input.sectionTitle ? `"${input.sectionTitle}"` : `"${input.lessonTitle}"`;
+    return {
+      answer:
+        `Good question. In ${input.lessonTitle}, the part that speaks to "${q}" is ${focus}. ` +
+        `Read that again and put it in your own words - name the key idea first, then one example. ` +
+        `If you can explain it back without looking, you've got it; if not, tell me which step loses you.`,
+    };
   }
 }

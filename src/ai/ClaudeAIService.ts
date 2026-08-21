@@ -16,7 +16,6 @@
 import type {
   SectionKind,
   AdaptSectionInput,
-  AIService,
   AdaptationDraft,
   DraftLessonInput,
   DraftQuizInput,
@@ -24,6 +23,7 @@ import type {
   NarrateInsightInput,
   QuizDraft,
 } from 'melda-shared';
+import type { AnswerQuestionInput, StudentAIService } from './student';
 import { MockAIService } from './MockAIService';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
@@ -37,7 +37,7 @@ export interface ClaudeAIServiceOptions {
   fetchImpl?: typeof fetch;
 }
 
-export class ClaudeAIService implements AIService {
+export class ClaudeAIService implements StudentAIService {
   private readonly apiKey: string;
   private readonly model: string;
   private readonly fetchImpl: typeof fetch;
@@ -130,6 +130,25 @@ export class ClaudeAIService implements AIService {
       return text.trim();
     } catch {
       return this.fallback.narrateInsight(input);
+    }
+  }
+
+  async answerQuestion(input: AnswerQuestionInput): Promise<{ answer: string }> {
+    try {
+      const where = input.sectionTitle
+        ? ` They asked from the section "${input.sectionTitle}".`
+        : '';
+      const answer = await this.text(
+        `You are MELDA, a patient tutor helping a student understand the lesson they are reading. ` +
+          `Answer their question at their level using ONLY the lesson content provided - if it does not ` +
+          `cover the answer, say so and point them to what it does cover. Two to four sentences, warm and ` +
+          `plain, no preamble.`,
+        `Lesson: "${input.lessonTitle}".${where}\nLesson content:\n${input.context}\n\nStudent question: ${input.question}`,
+        400,
+      );
+      return { answer: answer.trim() };
+    } catch {
+      return this.fallback.answerQuestion(input);
     }
   }
 

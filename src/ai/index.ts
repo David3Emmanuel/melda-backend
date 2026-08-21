@@ -8,13 +8,13 @@
 // The key lives only in the server environment - it never reaches either app.
 
 import 'dotenv/config';
-import type { AIService } from 'melda-shared';
 import { ClaudeAIService } from './ClaudeAIService';
 import { MockAIService } from './MockAIService';
+import type { StudentAIService } from './student';
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 const model = process.env.ANTHROPIC_MODEL;
 
-export const ai: AIService = apiKey
+export const ai: StudentAIService = apiKey
   ? new ClaudeAIService({ apiKey, model })
   : new MockAIService({ latencyMs: 450 });

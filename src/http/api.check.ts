@@ -153,6 +153,73 @@ async function main() {
     eq(ionic2.strugglers, 7, 'one fewer struggler after the submission');
     eq(ionic2.strugglePct, 28, 'Ionic Bonding dropped 32% -> 28%');
 
+    // --- student: study with MELDA (the ask) --------------------------------
+    const publishedLesson = ds.lessons.find((l) => l.status === 'published');
+    ok(!!publishedLesson, 'the seed has a published lesson for the student to open');
+    const lessonId = publishedLesson!.id;
+
+    const ask = await api('POST', '/ai/ask', {
+      token: studentToken,
+      body: { lessonId, question: 'Can you explain this more simply?' },
+    });
+    eq(ask.status, 200, 'student can ask about a published lesson');
+    ok(
+      typeof ask.json.answer === 'string' && ask.json.answer.length > 0,
+      'the ask returns a non-empty answer',
+    );
+    eq(
+      (
+        await api('POST', '/ai/ask', {
+          token: studentToken,
+          body: { lessonId: 'lesson-nope', question: 'hi' },
+        })
+      ).status,
+      404,
+      'asking about an unknown lesson is 404',
+    );
+    eq(
+      (await api('POST', '/ai/ask', { token: teacherToken, body: { lessonId, question: 'hi' } }))
+        .status,
+      403,
+      'a teacher cannot use the student ask route',
+    );
+
+    // --- student: save materials --------------------------------------------
+    eq(
+      (await api('POST', `/lessons/${lessonId}/save`, { token: studentToken })).status,
+      201,
+      'student saves a lesson',
+    );
+    eq(
+      (await api('POST', `/lessons/${lessonId}/save`, { token: studentToken })).status,
+      201,
+      'saving the same lesson twice is idempotent (still 201, one row)',
+    );
+    eq(
+      (await api('POST', `/lessons/${lessonId}/save`, { token: teacherToken })).status,
+      403,
+      'a teacher cannot save a lesson',
+    );
+
+    const saved1 = await api('GET', '/me/saved', { token: studentToken });
+    eq(saved1.status, 200, 'student lists saved lessons');
+    ok(
+      Array.isArray(saved1.json) && saved1.json.some((l: any) => l.id === lessonId),
+      'the saved lesson is listed',
+    );
+    ok(
+      saved1.json.every((l: any) => l.status === 'published'),
+      'only published lessons are listed',
+    );
+
+    eq(
+      (await api('DELETE', `/lessons/${lessonId}/save`, { token: studentToken })).status,
+      200,
+      'student unsaves the lesson',
+    );
+    const saved2 = await api('GET', '/me/saved', { token: studentToken });
+    ok(!saved2.json.some((l: any) => l.id === lessonId), 'the unsaved lesson drops off the list');
+
     console.log(`\nAll ${passed} assertions passed.`);
   } finally {
     server.close();
