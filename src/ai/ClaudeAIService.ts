@@ -26,7 +26,8 @@ import type {
 import type { AnswerQuestionInput, StudentAIService } from './student';
 import { MockAIService } from './MockAIService';
 
-const API_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_BASE = (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, '');
+const API_URL = `${ANTHROPIC_BASE}/v1/messages`;
 const SECTION_KINDS: SectionKind[] = ['explanation', 'example', 'activity', 'check'];
 
 export interface ClaudeAIServiceOptions {
