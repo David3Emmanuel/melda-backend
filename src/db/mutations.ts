@@ -146,6 +146,26 @@ export async function createAdaptation(
   lessonId: string,
   req: CreateAdaptationRequest,
 ): Promise<string> {
+  // One adaptation per (lesson, section, mode): re-saving the same mode replaces
+  // it, so a section never accumulates duplicate ("stacked") adaptations.
+  const [existing] = await db
+    .select({ id: t.adaptations.id })
+    .from(t.adaptations)
+    .where(
+      and(
+        eq(t.adaptations.lessonId, lessonId),
+        eq(t.adaptations.sectionId, req.sectionId),
+        eq(t.adaptations.mode, req.mode),
+      ),
+    )
+    .limit(1);
+  if (existing) {
+    await db
+      .update(t.adaptations)
+      .set({ body: req.body, conceptId: req.conceptId })
+      .where(eq(t.adaptations.id, existing.id));
+    return existing.id;
+  }
   const id = `adapt-${randomUUID()}`;
   await db.insert(t.adaptations).values({
     id,

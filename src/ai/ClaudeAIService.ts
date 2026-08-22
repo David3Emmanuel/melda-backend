@@ -106,11 +106,19 @@ export class ClaudeAIService implements StudentAIService {
         input.strugglePct && input.strugglePct > 0
           ? ` About ${input.strugglePct}% of the class struggled with this section.`
           : '';
+      // If the teacher already saved explanations for this section, tell the model
+      // to vary from them rather than repeat one (the "AI only sees the initial
+      // one" fix).
+      const prior = input.priorAdaptations?.length
+        ? ` Prior explanations already in the lesson (vary from these, do not repeat them): ${input.priorAdaptations
+            .map((p) => `"${p}"`)
+            .join('; ')}.`
+        : '';
       const body = await this.text(
         `You are MELDA, helping a teacher re-explain a concept for students who did not get it. ` +
           `Rewrite the section in a "${input.mode}" style. Reply with the rewritten explanation only - ` +
           `two to four sentences, no preamble.`,
-        `Concept: ${input.conceptName}. Section: "${input.sectionTitle}". Original: ${input.originalBody}.${ctx}`,
+        `Concept: ${input.conceptName}. Section: "${input.sectionTitle}". Original: ${input.originalBody}.${ctx}${prior}`,
         400,
       );
       return { mode: input.mode, body: body.trim() };
