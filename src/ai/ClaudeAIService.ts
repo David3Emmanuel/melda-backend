@@ -39,12 +39,12 @@ export interface ClaudeAIServiceOptions {
 }
 
 export class ClaudeAIService implements StudentAIService {
-  private readonly apiKey: string;
-  private readonly model: string;
-  private readonly fetchImpl: typeof fetch;
+  protected readonly apiKey: string;
+  protected readonly model: string;
+  protected readonly fetchImpl: typeof fetch;
   // Every method delegates here when the model call fails, so the UI degrades to
   // deterministic-but-coherent output instead of an error.
-  private readonly fallback = new MockAIService({ latencyMs: 0 });
+  protected readonly fallback = new MockAIService({ latencyMs: 0 });
 
   constructor(options: ClaudeAIServiceOptions) {
     this.apiKey = options.apiKey;
@@ -155,7 +155,7 @@ export class ClaudeAIService implements StudentAIService {
 
   // --- transport ---------------------------------------------------------------
 
-  private async text(system: string, user: string, maxTokens: number): Promise<string> {
+  protected async text(system: string, user: string, maxTokens: number): Promise<string> {
     const res = await this.fetchImpl(API_URL, {
       method: 'POST',
       headers: {

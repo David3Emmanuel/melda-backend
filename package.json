@@ -12,10 +12,11 @@
     "db:seed": "tsx src/db/seed.ts",
     "check:ai": "tsx src/ai/ai.check.ts",
     "check:claude": "tsx src/ai/claude.check.ts",
+    "check:deepseek": "tsx src/ai/deepseek.check.ts",
     "check:auth": "tsx src/http/auth.check.ts",
     "check:dataset": "tsx src/db/loadDataset.check.ts",
     "check:api": "tsx src/http/api.check.ts",
-    "check": "pnpm check:ai && pnpm check:claude && pnpm check:auth && pnpm check:dataset && pnpm check:api",
+    "check": "pnpm check:ai && pnpm check:claude && pnpm check:deepseek && pnpm check:auth && pnpm check:dataset && pnpm check:api",
     "format": "prettier --write ."
   },
   "dependencies": {
