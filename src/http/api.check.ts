@@ -11,6 +11,7 @@ import type { AddressInfo } from 'node:net';
 process.env.DATABASE_URL = ''; // force the in-process PGlite branch
 process.env.PGLITE_DIR = 'memory://'; // fresh, isolated, nothing persisted
 process.env.ANTHROPIC_API_KEY = ''; // force MockAIService - the check stays offline
+process.env.SEED_DEMO = 'true'; // the smoke test exercises the demo seed on boot
 
 let passed = 0;
 function ok(cond: boolean, msg: string) {
@@ -73,6 +74,20 @@ async function main() {
     ok(Array.isArray(classes.json) && classes.json.length >= 1, 'teacher has at least one class');
     const classId: string = classes.json[0].id;
 
+    // --- production multi-tenancy: a teacher creates a class ----------------
+    const newClass = await api('POST', '/classes', {
+      token: teacherToken,
+      body: { name: 'Physics 10', subject: 'Physics' },
+    });
+    eq(newClass.status, 201, 'teacher creates a class');
+    eq(newClass.json.subject, 'Physics', 'the class subject is stored');
+    eq(newClass.json.studentCount, 0, 'a new class starts empty');
+    ok(
+      typeof newClass.json.inviteCode === 'string' && newClass.json.inviteCode.length === 6,
+      'the class ships a 6-character invite code',
+    );
+    const inviteCode: string = newClass.json.inviteCode;
+
     const insights1 = await api('GET', `/classes/${classId}/insights`, { token: teacherToken });
     eq(insights1.status, 200, 'teacher reads insights');
     eq(insights1.json.summary.topStruggle.name, 'Ionic Bonding', 'top struggle is Ionic Bonding');
@@ -108,6 +123,36 @@ async function main() {
       (await api('GET', `/classes/${classId}/insights`, { token: studentToken })).status,
       403,
       'a student is forbidden from teacher insights',
+    );
+
+    // --- a student joins the new class by invite code -------------------------
+    eq(
+      (await api('POST', '/classes', { token: studentToken, body: { name: 'Nope' } })).status,
+      403,
+      'a student cannot create a class',
+    );
+    const join = await api('POST', '/classes/join', {
+      token: studentToken,
+      body: { code: inviteCode },
+    });
+    eq(join.status, 201, 'a student joins a class by invite code');
+    eq(join.json.name, 'Physics 10', 'the joined class resolves by name');
+    eq(
+      (await api('POST', '/classes/join', { token: studentToken, body: { code: inviteCode } }))
+        .status,
+      201,
+      'joining the same class twice is idempotent',
+    );
+    eq(
+      (await api('POST', '/classes/join', { token: studentToken, body: { code: 'ZZZZZZ' } }))
+        .status,
+      404,
+      'an unknown invite code is 404',
+    );
+    const studentClasses = await api('GET', '/me/classes', { token: studentToken });
+    ok(
+      Array.isArray(studentClasses.json) && studentClasses.json.some((c: any) => c.name === 'Physics 10'),
+      'the joined class shows in the student list',
     );
 
     // --- the student's paper has the answer key stripped --------------------

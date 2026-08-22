@@ -67,6 +67,7 @@ export async function seed() {
     id: classId,
     name: dataset.classroom.name,
     subject: dataset.classroom.subject,
+    inviteCode: 'DEMO10',
   });
   await db.insert(t.classTeachers).values({ classId, teacherId: DEMO.teacher.id });
   await db

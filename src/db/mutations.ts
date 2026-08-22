@@ -9,11 +9,12 @@
 // loadDataset then includes it, aggregate.ts sees it and the dashboard closes the
 // loop organically - no synthetic concept that nothing can ever measure.
 
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import {
   buildSubmission,
   missedTopicNames,
+  type ClassCard,
   type CreateAdaptationRequest,
   type CreateAssignmentRequest,
   type CreateLessonRequest,
@@ -25,6 +26,60 @@ import { loadDataset } from './loadDataset';
 import * as t from './schema';
 
 const now = (): string => new Date().toISOString();
+
+// --- classes (production: teachers create, students join by code) ------------
+
+// Unambiguous alphabet (no 0/O, 1/I/L) so a code is readable when dictated aloud.
+const INVITE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+const inviteCode = (): string => {
+  let out = '';
+  for (let i = 0; i < 6; i++) out += INVITE_ALPHABET[randomInt(INVITE_ALPHABET.length)];
+  return out;
+};
+
+// Collisions are astronomically rare at classroom scale, but the column is unique,
+// so check-and-retry rather than crash on the off chance one lands twice.
+async function uniqueInviteCode(): Promise<string> {
+  for (let i = 0; i < 5; i++) {
+    const code = inviteCode();
+    const [row] = await db.select().from(t.classes).where(eq(t.classes.inviteCode, code)).limit(1);
+    if (!row) return code;
+  }
+  throw new Error('could not allocate a unique invite code');
+}
+
+/** Create a class and make the teacher its owner. Returns the class + invite code. */
+export async function createClass(
+  teacherId: string,
+  req: { name: string; subject?: string },
+): Promise<{ id: string; name: string; subject: string; inviteCode: string }> {
+  const id = `class-${randomUUID()}`;
+  const name = req.name.trim();
+  const subject = req.subject?.trim() || 'General';
+  const code = await uniqueInviteCode();
+  await db.insert(t.classes).values({ id, name, subject, inviteCode: code });
+  await db.insert(t.classTeachers).values({ classId: id, teacherId });
+  return { id, name, subject, inviteCode: code };
+}
+
+/** Enroll a student in the class whose invite code matches. Idempotent. */
+export async function enrollStudent(studentId: string, code: string): Promise<ClassCard | null> {
+  const [cls] = await db
+    .select()
+    .from(t.classes)
+    .where(eq(t.classes.inviteCode, code.trim().toUpperCase()))
+    .limit(1);
+  if (!cls) return null;
+  await db.insert(t.classStudents).values({ classId: cls.id, studentId }).onConflictDoNothing();
+  const roster = await db.select().from(t.classStudents).where(eq(t.classStudents.classId, cls.id));
+  return {
+    id: cls.id,
+    name: cls.name,
+    subject: cls.subject,
+    studentCount: roster.length,
+  };
+}
 
 /**
  * Find-or-create one concept per class+name. Authoring names a single concept

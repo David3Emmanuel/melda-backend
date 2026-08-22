@@ -52,9 +52,13 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: 'internal error' });
 });
 
-/** Run migrations and seed the demo class if the database is empty. Idempotent. */
+/** Run migrations, and seed the demo class only in demo mode (never in
+ * production). Real deployments start empty and grow through signup +
+ * create-class/join; the demo seed is the "clone and run" convenience. */
 export async function ready(): Promise<void> {
   await migrateDb();
+  const seedDemo = process.env.SEED_DEMO === 'true' && process.env.NODE_ENV !== 'production';
+  if (!seedDemo) return;
   const [existing] = await db.select().from(t.classes).limit(1);
   if (!existing) {
     const result = await seed();

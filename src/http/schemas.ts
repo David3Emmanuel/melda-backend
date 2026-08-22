@@ -79,6 +79,17 @@ export const createAdaptationSchema = z.object({
   body: z.string().min(1),
 });
 
+// --- classes (production multi-tenancy: teachers create, students join) ------
+
+export const createClassSchema = z.object({
+  name: z.string().min(1).max(120),
+  subject: z.string().max(120).optional(),
+});
+
+export const joinClassSchema = z.object({
+  code: z.string().min(1).max(20),
+});
+
 // --- student EXPERIENCE ------------------------------------------------------
 
 export const submitAssignmentSchema = z.object({

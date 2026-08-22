@@ -37,6 +37,9 @@ export const classes = pgTable('classes', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   subject: text('subject').notNull(),
+  // Students join by this code (POST /classes/join). Nullable only for rows
+  // created before this column existed; every class the app creates sets one.
+  inviteCode: text('invite_code').unique(),
 });
 
 export const classTeachers = pgTable(

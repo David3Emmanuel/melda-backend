@@ -33,8 +33,8 @@ importers:
         specifier: ^9.0.3
         version: 9.0.3
       melda-shared:
-        specifier: github:David3Emmanuel/melda-shared#v0.5.0
-        version: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/2bc5852f37b24671568086d70c777b3eeab1163d
+        specifier: github:David3Emmanuel/melda-shared#v0.6.0
+        version: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/8a8dbe47dbec7d700d14ad17af26b9e2d3a23401
       pg:
         specifier: ^8.23.0
         version: 8.23.0
@@ -1021,9 +1021,9 @@ packages:
     resolution: {integrity: sha512-yz3xRaG20c6/BOzvYoDaGtPmGscs7YivItZEEqe6GbwNfHuxu9YNmvnEkMzKldAGY4/80pRcQRZSEnhquk9XuQ==}
     engines: {node: '>= 0.8'}
 
-  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/2bc5852f37b24671568086d70c777b3eeab1163d:
-    resolution: {tarball: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/2bc5852f37b24671568086d70c777b3eeab1163d}
-    version: 0.5.0
+  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/8a8dbe47dbec7d700d14ad17af26b9e2d3a23401:
+    resolution: {tarball: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/8a8dbe47dbec7d700d14ad17af26b9e2d3a23401}
+    version: 0.6.0
     peerDependencies:
       react: '>=19'
       react-native: '>=0.81'
@@ -1941,7 +1941,7 @@ snapshots:
 
   media-typer@1.1.1: {}
 
-  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/2bc5852f37b24671568086d70c777b3eeab1163d: {}
+  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/8a8dbe47dbec7d700d14ad17af26b9e2d3a23401: {}
 
   merge-descriptors@2.0.0: {}
 

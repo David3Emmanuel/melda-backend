@@ -39,7 +39,9 @@ import * as t from '../db/schema';
 import {
   createAdaptation,
   createAssignment,
+  createClass,
   createLesson,
+  enrollStudent,
   publishLesson,
   recordSignal,
   saveItem,
@@ -62,9 +64,11 @@ import {
   askSchema,
   createAdaptationSchema,
   createAssignmentSchema,
+  createClassSchema,
   createLessonSchema,
   draftLessonSchema,
   draftQuizSchema,
+  joinClassSchema,
   loginSchema,
   recordSignalSchema,
   signupSchema,
@@ -224,6 +228,25 @@ router.get('/me/classes', async (req: Request, res: Response) => {
     studentCount: rosters.filter((r) => r.classId === c.id).length,
   }));
   res.json(cards);
+});
+
+// A teacher creates a class (and owns it); the invite code in the response is
+// what they share with students.
+router.post('/classes', requireRole('teacher'), async (req: Request, res: Response) => {
+  const body = createClassSchema.parse(req.body);
+  const created = await createClass(req.user!.id, body);
+  res.status(201).json({ ...created, studentCount: 0 });
+});
+
+// A student joins a class by invite code. Idempotent: joining twice is a no-op.
+router.post('/classes/join', requireRole('student'), async (req: Request, res: Response) => {
+  const { code } = joinClassSchema.parse(req.body);
+  const card = await enrollStudent(req.user!.id, code);
+  if (!card) {
+    res.status(404).json({ error: 'invite code not found' });
+    return;
+  }
+  res.status(201).json(card);
 });
 
 // --- teacher UNDERSTAND (reads) ----------------------------------------------
