@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import {
   buildSubmission,
+  missedTopicNames,
   type CreateAdaptationRequest,
   type CreateAssignmentRequest,
   type CreateLessonRequest,
@@ -143,7 +144,7 @@ export async function writeSubmission(
   assignmentId: string,
   studentId: string,
   selections: Selections,
-): Promise<{ scorePct: number }> {
+): Promise<{ scorePct: number; topicsToReview: string[] }> {
   const ds = await loadDataset(classId);
   const assignment = ds.assignments.find((a) => a.id === assignmentId);
   if (!assignment) throw new Error(`assignment not found: ${assignmentId}`);
@@ -205,7 +206,10 @@ export async function writeSubmission(
 
   const total = submission.answers.length;
   const correct = submission.answers.filter((a) => a.correct).length;
-  return { scorePct: total ? Math.round((correct / total) * 100) : 0 };
+  return {
+    scorePct: total ? Math.round((correct / total) * 100) : 0,
+    topicsToReview: missedTopicNames(ds.concepts, submission),
+  };
 }
 
 export async function recordSignal(

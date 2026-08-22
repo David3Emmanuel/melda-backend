@@ -18,6 +18,7 @@ import {
   classSummary,
   conceptDetail,
   conceptInsights,
+  missedTopicNames,
   studentDetail,
   studentsByNeed,
   type Assignment,
@@ -28,6 +29,7 @@ import {
   type InsightsResponse,
   type Lesson,
   type StudentAssignment,
+  type StudentLesson,
   type Subject,
 } from 'melda-shared';
 import { ai } from '../ai/index';
@@ -97,7 +99,14 @@ function ownStatus(ds: Dataset, assignment: Assignment, studentId: string): Stud
       : sub
         ? 0
         : null;
-  return { assignment: redactAssignment(assignment), submitted: !!sub, scorePct };
+  return {
+    assignment: redactAssignment(assignment),
+    submitted: !!sub,
+    scorePct,
+    // The "topics to review" hint: concepts answered wrong, by name only - the
+    // key itself never leaves the server (redactAssignment already stripped it).
+    topicsToReview: sub ? missedTopicNames(ds.concepts, sub) : undefined,
+  };
 }
 
 /** Resolve the class that owns a lesson, or null if the lesson doesn't exist. */
@@ -239,7 +248,7 @@ router.get(
       topStrugglePct: summary.topStruggle?.strugglePct ?? 0,
       avgMasteryPct,
     });
-    const out: InsightsResponse = { summary, concepts, studentsByNeed: needs, narration };
+    const out: InsightsResponse = { summary, concepts, studentsByNeed: needs, avgMasteryPct, narration };
     res.json(out);
   },
 );
@@ -287,6 +296,23 @@ router.get('/lessons/:id', async (req: Request, res: Response) => {
   const found = await accessibleLesson(req.user!, pathParam(req, 'id'));
   if (!found) {
     res.status(404).json({ error: 'lesson not found' });
+    return;
+  }
+  // The student reader wants the lesson plus its own saved-state in one call
+  // (so opening a lesson doesn't fetch the whole saved list); teachers don't
+  // need the flag, so only the student response carries it.
+  if (req.user!.role === 'student') {
+    const [row] = await db
+      .select({ lessonId: t.savedItems.lessonId })
+      .from(t.savedItems)
+      .where(
+        and(
+          eq(t.savedItems.studentId, req.user!.id),
+          eq(t.savedItems.lessonId, pathParam(req, 'id')),
+        ),
+      )
+      .limit(1);
+    res.json({ ...found.lesson, saved: !!row } satisfies StudentLesson);
     return;
   }
   res.json(found.lesson);
@@ -385,13 +411,13 @@ router.post(
       return;
     }
     const { selections } = submitAssignmentSchema.parse(req.body);
-    const { scorePct } = await writeSubmission(
+    const { scorePct, topicsToReview } = await writeSubmission(
       classId,
       pathParam(req, 'id'),
       req.user!.id,
       selections,
     );
-    res.status(201).json({ submitted: true, scorePct });
+    res.status(201).json({ submitted: true, scorePct, topicsToReview });
   },
 );
 

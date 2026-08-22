@@ -80,6 +80,10 @@ async function main() {
       typeof insights1.json.narration === 'string' && insights1.json.narration.length > 0,
       'insights carry AI narration',
     );
+    ok(
+      typeof insights1.json.avgMasteryPct === 'number',
+      'insights carry the server-computed avg mastery',
+    );
     const ionic1 = insights1.json.concepts.find((c: any) => c.name === 'Ionic Bonding');
     ok(!!ionic1, 'Ionic Bonding is in the concept curve');
     eq(ionic1.strugglePct, 32, 'Ionic Bonding starts at 32%');
@@ -125,6 +129,42 @@ async function main() {
       'the student still gets the choices to answer',
     );
 
+    // --- a wrong paper grades 0 and names its topics, without leaking the key --
+    const wrongSel: Record<string, number> = {};
+    for (const q of ionicAssignments[0].questions) {
+      if (typeof q.correctIndex === 'number') {
+        wrongSel[q.id] = (q.correctIndex + 1) % (q.choices?.length ?? 1); // guaranteed wrong
+      }
+    }
+    const wrong = await api('POST', `/assignments/${ionicAssignments[0].id}/submissions`, {
+      token: studentToken,
+      body: { selections: wrongSel },
+    });
+    eq(wrong.status, 201, 'an all-wrong paper still submits');
+    eq(wrong.json.scorePct, 0, 'all-wrong scores 0');
+    ok(
+      Array.isArray(wrong.json.topicsToReview) && wrong.json.topicsToReview.length >= 1,
+      'wrong answers come back with topics to review',
+    );
+    ok(
+      wrong.json.topicsToReview.every(
+        (t: any) =>
+          typeof t === 'string' &&
+          !ionicAssignments[0].questions.some(
+            (q: any) => q.prompt === t || q.choices?.includes(t),
+          ),
+      ),
+      'topics are concept names only - no prompt or choice text leaks',
+    );
+    const paper2 = await api('GET', `/assignments/${ionicAssignments[0].id}`, {
+      token: studentToken,
+    });
+    eq(paper2.json.submitted, true, 'the stored paper knows it is submitted');
+    ok(
+      Array.isArray(paper2.json.topicsToReview) && paper2.json.topicsToReview.length >= 1,
+      'the stored paper carries its topics to review',
+    );
+
     // --- student submits every assignment all-correct (key read out-of-band) --
     for (const a of ds.assignments) {
       const selections: Record<string, number> = {};
@@ -140,6 +180,15 @@ async function main() {
     }
 
     // --- the write moved the teacher's view: the loop is closed -------------
+    const perfectPaper = await api('GET', `/assignments/${ionicAssignments[0].id}`, {
+      token: studentToken,
+    });
+    ok(
+      Array.isArray(perfectPaper.json.topicsToReview) &&
+        perfectPaper.json.topicsToReview.length === 0,
+      'an all-correct paper has no topics to review',
+    );
+
     const student = await api('GET', `/classes/${classId}/students/${victimId}`, {
       token: teacherToken,
     });
@@ -185,6 +234,15 @@ async function main() {
     );
 
     // --- student: save materials --------------------------------------------
+    const lessonBefore = await api('GET', `/lessons/${lessonId}`, { token: studentToken });
+    eq(lessonBefore.json.saved, false, 'the student lesson read reports not saved yet');
+    const teacherLesson = await api('GET', `/lessons/${lessonId}`, { token: teacherToken });
+    eq(
+      'saved' in teacherLesson.json,
+      false,
+      'the teacher lesson read carries no saved flag',
+    );
+
     eq(
       (await api('POST', `/lessons/${lessonId}/save`, { token: studentToken })).status,
       201,
@@ -212,6 +270,9 @@ async function main() {
       'only published lessons are listed',
     );
 
+    const lessonAfterSave = await api('GET', `/lessons/${lessonId}`, { token: studentToken });
+    eq(lessonAfterSave.json.saved, true, 'the lesson read now reports saved');
+
     eq(
       (await api('DELETE', `/lessons/${lessonId}/save`, { token: studentToken })).status,
       200,
@@ -219,6 +280,9 @@ async function main() {
     );
     const saved2 = await api('GET', '/me/saved', { token: studentToken });
     ok(!saved2.json.some((l: any) => l.id === lessonId), 'the unsaved lesson drops off the list');
+
+    const lessonAfterUnsave = await api('GET', `/lessons/${lessonId}`, { token: studentToken });
+    eq(lessonAfterUnsave.json.saved, false, 'the lesson read reports unsaved again');
 
     console.log(`\nAll ${passed} assertions passed.`);
   } finally {
