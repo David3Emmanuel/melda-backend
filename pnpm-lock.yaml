@@ -33,8 +33,8 @@ importers:
         specifier: ^9.0.3
         version: 9.0.3
       melda-shared:
-        specifier: github:David3Emmanuel/melda-shared#v0.3.0
-        version: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/764f3caab2056f650eb48bab285332cabf69c12d
+        specifier: github:David3Emmanuel/melda-shared#v0.4.0
+        version: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/22e2a05f103299713c3594d93b8eb69417a75387
       pg:
         specifier: ^8.23.0
         version: 8.23.0
@@ -1021,9 +1021,9 @@ packages:
     resolution: {integrity: sha512-yz3xRaG20c6/BOzvYoDaGtPmGscs7YivItZEEqe6GbwNfHuxu9YNmvnEkMzKldAGY4/80pRcQRZSEnhquk9XuQ==}
     engines: {node: '>= 0.8'}
 
-  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/764f3caab2056f650eb48bab285332cabf69c12d:
-    resolution: {tarball: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/764f3caab2056f650eb48bab285332cabf69c12d}
-    version: 0.3.0
+  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/22e2a05f103299713c3594d93b8eb69417a75387:
+    resolution: {tarball: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/22e2a05f103299713c3594d93b8eb69417a75387}
+    version: 0.4.0
     peerDependencies:
       '@expo/vector-icons': '>=15'
       react: '>=19'
@@ -1941,7 +1941,7 @@ snapshots:
 
   media-typer@1.1.1: {}
 
-  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/764f3caab2056f650eb48bab285332cabf69c12d: {}
+  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/22e2a05f103299713c3594d93b8eb69417a75387: {}
 
   merge-descriptors@2.0.0: {}
 
