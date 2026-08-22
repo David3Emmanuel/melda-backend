@@ -114,9 +114,13 @@ export class ClaudeAIService implements StudentAIService {
             .map((p) => `"${p}"`)
             .join('; ')}.`
         : '';
+      const directive =
+        input.mode === 'custom'
+          ? `Rewrite it exactly as the teacher asks: "${input.customInstruction?.trim() || 'in a fresh, clear way they will understand'}"`
+          : `Rewrite the section in a "${input.mode}" style.`;
       const body = await this.text(
         `You are MELDA, helping a teacher re-explain a concept for students who did not get it. ` +
-          `Rewrite the section in a "${input.mode}" style. Reply with the rewritten explanation only - ` +
+          `${directive}. Reply with the rewritten explanation only - ` +
           `two to four sentences, no preamble.`,
         `Concept: ${input.conceptName}. Section: "${input.sectionTitle}". Original: ${input.originalBody}.${ctx}${prior}`,
         400,

@@ -29,9 +29,9 @@ const titleCase = (s: string): string =>
     .map((w) => w[0]?.toUpperCase() + w.slice(1))
     .join(' ');
 
-// Each mode reframes the same section a different way. The copy is generic in
-// its pedagogy but always names the concept, so it reads as a real adaptation.
-const MODE_PARAGRAPH: Record<AdaptationMode, (concept: string) => string> = {
+// Each preset reframes the same section a different way. `custom` is omitted on
+// purpose: it has no canned pedagogy - the teacher's own instruction drives it.
+const MODE_PARAGRAPH: Record<Exclude<AdaptationMode, 'custom'>, (concept: string) => string> = {
   simpler: (c) =>
     `Here is ${c} with the jargon stripped out. Anchor it to one plain idea students already believe, then add nothing else until that idea is solid. If they remember a single sentence, this is the one.`,
   detailed: (c) =>
@@ -126,9 +126,17 @@ export class MockAIService implements StudentAIService {
       input.strugglePct && input.strugglePct > 0
         ? `${input.strugglePct}% of the class struggled with "${input.sectionTitle}", so here is a ${input.mode} take. `
         : '';
+    const body =
+      input.mode === 'custom'
+        ? // The teacher drove this one themselves: honour their instruction over any preset.
+          context +
+          (input.customInstruction?.trim()
+            ? `${concept} retold the way you asked, which is to "${input.customInstruction}".`
+            : `Here is ${concept} retold at your request - follow the teacher's own instruction rather than a preset.`)
+        : context + MODE_PARAGRAPH[input.mode](concept);
     return {
       mode: input.mode,
-      body: context + MODE_PARAGRAPH[input.mode](concept),
+      body,
     };
   }
 

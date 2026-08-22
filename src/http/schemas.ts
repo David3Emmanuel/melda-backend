@@ -15,6 +15,7 @@ const adaptationMode = z.enum([
   'visual',
   'practice',
   'reexplain',
+  'custom',
 ]);
 const signalType = z.enum([
   'QUESTION_STRUGGLE',
@@ -124,7 +125,9 @@ export const adaptSectionSchema = z.object({
   sectionTitle: z.string().min(1),
   originalBody: z.string(),
   mode: adaptationMode,
+  customInstruction: z.string().optional(),
   strugglePct: z.number().optional(),
+  priorAdaptations: z.array(z.string()).optional(),
 });
 
 // A student asking about a lesson they're reading. sectionId narrows the framing;

@@ -92,6 +92,18 @@ async function main(): Promise<void> {
     ok(out.body.startsWith('32%'));
   });
 
+  await check('adaptSection honours the teacher instruction for custom mode', async () => {
+    const out = await ai.adaptSection({
+      conceptName: 'Ionic Bonding',
+      sectionTitle: 'What is an ionic bond?',
+      originalBody: 'One atom gives an electron to another.',
+      mode: 'custom',
+      customInstruction: 'use a basketball pass as the analogy',
+    });
+    eq(out.mode, 'custom');
+    ok(out.body.includes('basketball'), 'custom copy follows the teacher instruction');
+  });
+
   await check(
     'narrateInsight reports the real number, and has a healthy-class branch',
     async () => {
