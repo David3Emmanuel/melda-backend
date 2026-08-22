@@ -1,6 +1,7 @@
 {
   "name": "melda-backend",
   "version": "0.1.0",
+  "packageManager": "pnpm@10.30.3",
   "private": true,
   "description": "MELDA backend: owns the shared class dataset and proxies the AI calls.",
   "scripts": {
