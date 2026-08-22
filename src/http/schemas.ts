@@ -49,6 +49,7 @@ export const signupSchema = z.object({
 
 export const createLessonSchema = z.object({
   topic: z.string().min(1),
+  gradeLevel: z.string().optional(),
   title: z.string().min(1),
   summary: z.string(),
   sections: z

@@ -120,6 +120,8 @@ export async function createLesson(classId: string, req: CreateLessonRequest): P
     id,
     classId,
     title: req.title,
+    topic: req.topic,
+    gradeLevel: req.gradeLevel,
     summary: req.summary,
     status: req.publish ? 'published' : 'draft',
     createdAt: now(),

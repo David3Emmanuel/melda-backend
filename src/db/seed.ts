@@ -92,6 +92,8 @@ export async function seed() {
         id: l.id,
         classId,
         title: l.title,
+        topic: l.topic,
+        gradeLevel: l.gradeLevel,
         summary: l.summary,
         status: l.status,
         createdAt: l.createdAt,

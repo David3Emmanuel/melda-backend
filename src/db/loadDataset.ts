@@ -122,6 +122,8 @@ export async function loadDataset(classId: string): Promise<Dataset> {
     return {
       id: l.id,
       title: l.title,
+      topic: l.topic ?? undefined,
+      gradeLevel: l.gradeLevel ?? undefined,
       summary: l.summary,
       conceptIds,
       sections,

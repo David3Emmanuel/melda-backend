@@ -86,6 +86,8 @@ export const lessons = pgTable('lessons', {
     .notNull()
     .references(() => classes.id),
   title: text('title').notNull(),
+  topic: text('topic'),
+  gradeLevel: text('grade_level'),
   summary: text('summary').notNull(),
   status: text('status').notNull(),
   createdAt: text('created_at').notNull(),
