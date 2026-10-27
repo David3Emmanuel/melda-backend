@@ -33,8 +33,8 @@ importers:
         specifier: ^9.0.3
         version: 9.0.3
       melda-shared:
-        specifier: github:David3Emmanuel/melda-shared#v0.7.6
-        version: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/5493e2f7288df3b7f4839a62ace9519ddc44cdfc
+        specifier: github:David3Emmanuel/melda-shared#v0.7.9
+        version: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/512c4e6878c27140e310cb78af35213cd1402d07
       pg:
         specifier: ^8.23.0
         version: 8.23.0
@@ -1021,9 +1021,9 @@ packages:
     resolution: {integrity: sha512-yz3xRaG20c6/BOzvYoDaGtPmGscs7YivItZEEqe6GbwNfHuxu9YNmvnEkMzKldAGY4/80pRcQRZSEnhquk9XuQ==}
     engines: {node: '>= 0.8'}
 
-  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/5493e2f7288df3b7f4839a62ace9519ddc44cdfc:
-    resolution: {tarball: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/5493e2f7288df3b7f4839a62ace9519ddc44cdfc}
-    version: 0.7.6
+  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/512c4e6878c27140e310cb78af35213cd1402d07:
+    resolution: {tarball: https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/512c4e6878c27140e310cb78af35213cd1402d07}
+    version: 0.7.9
     peerDependencies:
       mathjax-full: '>=3.2'
       react: '>=19'
@@ -1944,7 +1944,7 @@ snapshots:
 
   media-typer@1.1.1: {}
 
-  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/5493e2f7288df3b7f4839a62ace9519ddc44cdfc: {}
+  melda-shared@https://codeload.github.com/David3Emmanuel/melda-shared/tar.gz/512c4e6878c27140e310cb78af35213cd1402d07: {}
 
   merge-descriptors@2.0.0: {}
 
