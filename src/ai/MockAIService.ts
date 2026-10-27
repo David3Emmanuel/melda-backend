@@ -70,7 +70,7 @@ export class MockAIService implements StudentAIService {
         {
           title: `What is ${topic}?`,
           kind: 'explanation',
-          body: `Open by connecting ${topic} to what students already know, then give the one core idea in a single clear sentence before adding any detail.`,
+          body: `Open by connecting ${topic} to what students already know, then give the one core idea in a single clear sentence before adding any detail.\n\n**Key idea:** the one sentence to remember. Mathematics written in LaTeX renders inline, like $E = mc^2$, and as a display equation:\n\n$$a^2 + b^2 = c^2$$`,
         },
         {
           title: 'Worked example',

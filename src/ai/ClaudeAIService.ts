@@ -59,7 +59,10 @@ export class ClaudeAIService implements StudentAIService {
       const draft = await this.json<LessonDraft>(
         'You are MELDA, a teaching assistant. Draft a short four-part lesson. Respond with ONLY JSON of the form ' +
           '{"title":"","summary":"","sections":[{"title":"","kind":"","body":""}]}. ' +
-          'kind is one of: explanation, example, activity, check.',
+          'kind is one of: explanation, example, activity, check. ' +
+          'Write every body and the summary in Markdown: use **bold** for key terms, blank lines between paragraphs, ' +
+          'and "- " for bullet lists. Write ALL mathematics as LaTeX - inline with $...$ and display equations as ' +
+          '$$...$$ on their own line (for example: the area of a circle is $A = \\pi r^2$). Never use ASCII art or plain-text math.',
         `Topic: ${input.topic}${grade}.${notes}`,
         1200,
       );
@@ -121,7 +124,8 @@ export class ClaudeAIService implements StudentAIService {
       const body = await this.text(
         `You are MELDA, helping a teacher re-explain a concept for students who did not get it. ` +
           `${directive}. Reply with the rewritten explanation only - ` +
-          `two to four sentences, no preamble.`,
+          `two to four sentences, no preamble. Use Markdown (**bold** key terms, blank lines between paragraphs) ` +
+          `and write ALL mathematics as LaTeX ($...$ inline, $$...$$ for display). Never use ASCII art or plain-text math.`,
         `Concept: ${input.conceptName}. Section: "${input.sectionTitle}". Original: ${input.originalBody}.${ctx}${prior}`,
         400,
       );
@@ -155,7 +159,8 @@ export class ClaudeAIService implements StudentAIService {
         `You are MELDA, a patient tutor helping a student understand the lesson they are reading. ` +
           `Answer their question at their level using ONLY the lesson content provided - if it does not ` +
           `cover the answer, say so and point them to what it does cover. Two to four sentences, warm and ` +
-          `plain, no preamble.`,
+          `plain, no preamble. Use Markdown (**bold** key terms) and write ALL mathematics as LaTeX ($...$). ` +
+          `Never use ASCII art or plain-text math.`,
         `Lesson: "${input.lessonTitle}".${where}\nLesson content:\n${input.context}\n\nStudent question: ${input.question}`,
         400,
       );

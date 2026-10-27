@@ -32,6 +32,10 @@ async function main(): Promise<void> {
     for (const s of draft.sections) ok(s.body.toLowerCase().includes('photosynthesis'), s.title);
     const kinds = draft.sections.map((s) => s.kind);
     ok(kinds.includes('explanation') && kinds.includes('check'));
+    ok(
+      draft.sections.some((s) => s.body.includes('$')),
+      'lesson bodies carry LaTeX math delimiters for the renderer',
+    );
   });
 
   await check(

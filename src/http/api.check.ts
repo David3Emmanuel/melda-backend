@@ -88,6 +88,12 @@ async function main() {
     );
     const inviteCode: string = newClass.json.inviteCode;
 
+    // The invite code is re-readable after creation (not a one-shot): the teacher's
+    // own class card carries it, so a teacher who navigated away can still share it.
+    const teacherClasses = await api('GET', '/me/classes', { token: teacherToken });
+    const myPhysics = teacherClasses.json.find((c: any) => c.name === 'Physics 10');
+    eq(myPhysics?.inviteCode, inviteCode, 'the teacher can re-read the invite code');
+
     const insights1 = await api('GET', `/classes/${classId}/insights`, { token: teacherToken });
     eq(insights1.status, 200, 'teacher reads insights');
     eq(insights1.json.summary.topStruggle.name, 'Ionic Bonding', 'top struggle is Ionic Bonding');
@@ -153,6 +159,10 @@ async function main() {
     ok(
       Array.isArray(studentClasses.json) && studentClasses.json.some((c: any) => c.name === 'Physics 10'),
       'the joined class shows in the student list',
+    );
+    ok(
+      studentClasses.json.every((c: any) => c.inviteCode === undefined),
+      'a student never sees the invite code on their class cards',
     );
 
     // --- the student's paper has the answer key stripped --------------------

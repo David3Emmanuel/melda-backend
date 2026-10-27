@@ -226,6 +226,9 @@ router.get('/me/classes', async (req: Request, res: Response) => {
     name: c.name,
     subject: c.subject as Subject,
     studentCount: rosters.filter((r) => r.classId === c.id).length,
+    // Teachers own the code and re-share it from the roster; students already
+    // joined and never need to see it.
+    inviteCode: user.role === 'teacher' ? c.inviteCode ?? undefined : undefined,
   }));
   res.json(cards);
 });
